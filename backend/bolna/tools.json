@@ -1,0 +1,291 @@
+[
+  {
+    "name": "identify_caller",
+    "description": "Call this FIRST, at the very start of every call, with the caller's phone number. It looks up the patient(s) tied to this phone number and any in-progress call state — never assume who is calling. If it returns multiple patients on the same number (a shared/family line), ask for the caller's full name before continuing — never guess which patient it is. If it returns dropped_call or callback true with resume_context, that means this call is a continuation of an earlier one: briefly acknowledge the drop and continue from resume_context instead of restarting the conversation.",
+    "pre_call_message": "One moment…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "phone": { "type": "string", "description": "Caller phone in E.164, e.g. +9190…" },
+        "spoken_name": { "type": "string", "description": "Name the caller gives, if any" }
+      },
+      "required": ["phone"]
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "phone": "%(phone)s", "spoken_name": "%(spoken_name)s" },
+      "url": "{BASE_URL}/tools/identify_caller",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "create_patient",
+    "description": "Register a new patient. Call this only after identify_caller shows the caller is not already known (or after the caller is disambiguated on a shared line and turns out to be new). Always collect the patient's full name before calling this — never book anonymously. This immediately creates the patient in the clinic's real system (not just locally), so it is safe to call even if the caller doesn't complete a booking in this call.",
+    "pre_call_message": "Let me get you registered…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "full_name": { "type": "string", "description": "Patient's full name" },
+        "phone": { "type": "string", "description": "Caller phone in E.164" }
+      },
+      "required": ["full_name", "phone"]
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "full_name": "%(full_name)s", "phone": "%(phone)s" },
+      "url": "{BASE_URL}/tools/create_patient",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "get_doctors",
+    "description": "Use this whenever the caller asks which doctors/specialists exist, who is available in general, or which department covers a condition — e.g. 'which doctors do you have', 'I need a skin specialist', 'who handles children'. Returns the live doctor roster (name, specialty, branches) from the clinic's real records. Never answer this from your own knowledge — doctor names and specialties are NOT in your instructions and can change. This tool does NOT return appointment times — for times, call find_availability or get_earliest_slot next.",
+    "pre_call_message": "Let me check…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "branch": { "type": "string", "description": "Filter to doctors at this branch (name or id), if the caller specified one" },
+        "specialty": { "type": "string", "description": "Filter by specialty, e.g. 'Dermatology', 'Pediatrics'" }
+      }
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "branch": "%(branch)s", "specialty": "%(specialty)s" },
+      "url": "{BASE_URL}/tools/get_doctors",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "get_branch_info",
+    "description": "Use this when the caller asks about clinic locations, addresses, or opening hours. Returns the live list of branches with address and hours. Never state a branch address or hours from memory.",
+    "pre_call_message": "One moment…",
+    "parameters": { "type": "object", "properties": {} },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": {},
+      "url": "{BASE_URL}/tools/get_branch_info",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "find_availability",
+    "description": "The general-purpose live availability search. Call this for any specific-ish time request — a date, a day of week, a time window ('Thursday morning', 'around 4:30', 'Mondays and Wednesdays'). Call it again every time the caller asks about a different day/time — never reuse an earlier result, even from seconds ago, because a slot can be taken in between. Always re-check availability again immediately before calling book_appointment.",
+    "pre_call_message": "Let me check what's available…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "appointment_type": { "type": "string", "description": "One of: consult, first, followup" },
+        "branch": { "type": "string", "description": "Branch name or id, e.g. 'Whitefield' or 'indiranagar'" },
+        "practitioner": { "type": "string", "description": "Doctor name or id if the caller asked for a specific doctor" },
+        "specialty": { "type": "string", "description": "e.g. 'Dermatology', 'Pediatrics', 'General Medicine'" },
+        "date": { "type": "string", "description": "Specific day YYYY-MM-DD" },
+        "date_from": { "type": "string", "description": "Range start YYYY-MM-DD" },
+        "date_to": { "type": "string", "description": "Range end YYYY-MM-DD" },
+        "time_from": { "type": "string", "description": "Earliest local time HH:MM, e.g. '16:00' for 'after 4'" },
+        "time_to": { "type": "string", "description": "Latest local time HH:MM" },
+        "earliest_across_all": { "type": "string", "description": "'true' if the caller wants the soonest across all doctors/branches, else 'false'" },
+        "limit": { "type": "string", "description": "Max number of slots to return, e.g. '5'" }
+      }
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": {
+        "appointment_type": "%(appointment_type)s", "branch": "%(branch)s", "practitioner": "%(practitioner)s",
+        "specialty": "%(specialty)s", "date": "%(date)s", "date_from": "%(date_from)s", "date_to": "%(date_to)s",
+        "time_from": "%(time_from)s", "time_to": "%(time_to)s",
+        "earliest_across_all": "%(earliest_across_all)s", "limit": "%(limit)s"
+      },
+      "url": "{BASE_URL}/tools/find_availability",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "get_earliest_slot",
+    "description": "Use this specifically when the caller wants 'the earliest', 'the soonest', 'first available', or 'today if possible' — it genuinely compares every doctor across BOTH branches and returns the true earliest, so you never anchor on one doctor's later slot or miss a closer opening elsewhere. Prefer this over find_availability whenever the request is about speed rather than a specific day/time.",
+    "pre_call_message": "Let me find the earliest one for you…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "specialty": { "type": "string" },
+        "branch": { "type": "string" },
+        "appointment_type": { "type": "string", "description": "One of: consult, first, followup" }
+      }
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "specialty": "%(specialty)s", "branch": "%(branch)s", "appointment_type": "%(appointment_type)s" },
+      "url": "{BASE_URL}/tools/get_earliest_slot",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "book_appointment",
+    "description": "Book a slot. Only call this after: the patient is identified or registered (with full name), a specific doctor+branch+time slot was just confirmed live (via find_availability or get_earliest_slot), and the caller has verbally agreed to that exact slot. Read back exactly the doctor, branch, and time this tool returns — that is the actual booking; never state a different branch or time than what came back. If it returns conflict=true, the slot was taken in the last few seconds: apologize briefly, call find_availability again, and offer the new options — do not retry the same slot.",
+    "pre_call_message": "Booking that now…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "patient_name": { "type": "string", "description": "Caller's full name (required)" },
+        "phone": { "type": "string" },
+        "practitioner_id": { "type": "string", "description": "practitioner_id from the chosen slot" },
+        "branch_id": { "type": "string", "description": "branch_id from the chosen slot" },
+        "start_iso": { "type": "string", "description": "start_iso from the chosen slot" },
+        "appointment_type_id": { "type": "string", "description": "One of: consult, first, followup" },
+        "idempotency_key": { "type": "string", "description": "Stable id for this booking attempt to avoid duplicates" }
+      },
+      "required": ["patient_name", "phone", "practitioner_id", "branch_id", "start_iso"]
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": {
+        "patient_name": "%(patient_name)s", "phone": "%(phone)s", "practitioner_id": "%(practitioner_id)s",
+        "branch_id": "%(branch_id)s", "start_iso": "%(start_iso)s", "appointment_type_id": "%(appointment_type_id)s",
+        "idempotency_key": "%(idempotency_key)s"
+      },
+      "url": "{BASE_URL}/tools/book_appointment",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "get_patient_appointments",
+    "description": "Use this before any reschedule or cancellation to find the patient's existing appointment(s) — never ask the caller to read out an appointment id. Provide phone (and, if the line has multiple patients, prefer patient_id from identify_caller) to get the exact appointment_id to pass into reschedule_appointment or cancel_appointment.",
+    "pre_call_message": "Let me pull that up…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "phone": { "type": "string", "description": "Provide this or patient_id" },
+        "patient_id": { "type": "string", "description": "Provide this or phone" }
+      }
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "phone": "%(phone)s", "patient_id": "%(patient_id)s" },
+      "url": "{BASE_URL}/tools/get_patient_appointments",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "reschedule_appointment",
+    "description": "Move an existing appointment (found via get_patient_appointments) to a new time that was just confirmed live via find_availability. Returns a fee ONLY if the change falls inside the clinic's policy window — mention a fee ONLY if the response actually contains one; never state a fee by default or guess an amount.",
+    "pre_call_message": "Updating that now…",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "appointment_id": { "type": "string", "description": "From get_patient_appointments" },
+        "new_start_iso": { "type": "string", "description": "start_iso of the new chosen slot" },
+        "idempotency_key": { "type": "string" }
+      },
+      "required": ["appointment_id", "new_start_iso"]
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "appointment_id": "%(appointment_id)s", "new_start_iso": "%(new_start_iso)s", "idempotency_key": "%(idempotency_key)s" },
+      "url": "{BASE_URL}/tools/reschedule_appointment",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "cancel_appointment",
+    "description": "Cancel an appointment found via get_patient_appointments. Confirm with the caller which specific appointment before cancelling if they have more than one. Returns a fee ONLY if inside the policy window — mention it only if present in the response.",
+    "pre_call_message": "Cancelling that now…",
+    "parameters": {
+      "type": "object",
+      "properties": { "appointment_id": { "type": "string" } },
+      "required": ["appointment_id"]
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "appointment_id": "%(appointment_id)s" },
+      "url": "{BASE_URL}/tools/cancel_appointment",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "log_followup",
+    "description": "Use this whenever the caller asks for a human, raises a clinical/medical concern, or needs anything outside booking/rescheduling/cancelling. After calling this, tell the caller someone from the clinic will call them back — never imply a live transfer is happening unless one actually is.",
+    "pre_call_message": "",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "reason": { "type": "string", "description": "e.g. 'asked_for_human', 'clinical_concern', 'out_of_scope'" },
+        "phone": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["reason"]
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "reason": "%(reason)s", "phone": "%(phone)s", "notes": "%(notes)s" },
+      "url": "{BASE_URL}/tools/log_followup",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  },
+  {
+    "name": "save_session_state",
+    "description": "Call this after each meaningful step in the conversation (once intent is known, once a doctor/branch/time is chosen, right before booking) so the call can be resumed correctly if it drops. Send the phone plus a small context object describing exactly where the conversation is (e.g. intent, specialty, branch, chosen_slot, step), as a JSON string.",
+    "pre_call_message": "",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "phone": { "type": "string" },
+        "context": { "type": "string", "description": "JSON string, e.g. {\"intent\":\"book\",\"specialty\":\"Dermatology\",\"step\":\"chose_time\"}" },
+        "state": { "type": "string", "description": "One of: active, interrupted, completed" }
+      },
+      "required": ["phone", "context"]
+    },
+    "key": "custom_task",
+    "value": {
+      "method": "POST",
+      "param": { "phone": "%(phone)s", "context": "%(context)s", "state": "%(state)s" },
+      "url": "{BASE_URL}/tools/save_session_state",
+      "api_token": null,
+      "headers": { "Content-Type": "application/json", "X-Tool-Secret": "{TOOL_WEBHOOK_SECRET}" },
+      "pre_call_webhook_url": null,
+      "pre_call_webhook_param": null
+    }
+  }
+]

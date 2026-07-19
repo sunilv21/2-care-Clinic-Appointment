@@ -1,0 +1,14 @@
+# Clinic Voice Receptionist — backend + seed + eval
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.0
+
+# HTTP (Cliniko) + env
+httpx>=0.27
+python-dotenv>=1.0
+
+# Postgres (Supabase)
+psycopg2-binary>=2.9
+
+# Eval harness LLM (OpenAI-compatible client; points at NVIDIA NIM)
+openai>=1.40

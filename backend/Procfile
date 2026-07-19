@@ -1,0 +1,5 @@
+web: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}
+pms_worker: python -m app.pms_writeback --loop 10
+outbound_worker: python -m app.outbound_worker --loop 30
+cliniko_sync_worker: python -m app.cliniko_sync --loop 60
+keep_warm_worker: python -m app.keep_warm --loop 300

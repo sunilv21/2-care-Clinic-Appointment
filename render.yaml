@@ -1,0 +1,78 @@
+services:
+  - type: web
+    name: aarogya-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: aarogya-backend-env
+
+  - type: worker
+    name: aarogya-pms-worker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.pms_writeback --loop 10
+    envVars:
+      - fromGroup: aarogya-backend-env
+
+  - type: worker
+    name: aarogya-outbound-worker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.outbound_worker --loop 30
+    envVars:
+      - fromGroup: aarogya-backend-env
+
+  - type: worker
+    name: aarogya-cliniko-sync-worker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.cliniko_sync --loop 60
+    envVars:
+      - fromGroup: aarogya-backend-env
+
+  - type: worker
+    name: aarogya-keep-warm-worker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.keep_warm --loop 300
+    envVars:
+      - fromGroup: aarogya-backend-env
+
+envVarGroups:
+  - name: aarogya-backend-env
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        sync: false
+      - key: CLINIKO_API_KEY
+        sync: false
+      - key: CONTACT_EMAIL
+        sync: false
+      - key: BOLNA_API_KEY
+        sync: false
+      - key: BOLNA_AGENT_ID
+        sync: false
+      - key: BOLNA_BASE_URL
+        value: https://api.bolna.ai
+      - key: BOLNA_FROM_NUMBER
+        sync: false
+      - key: TOOL_WEBHOOK_SECRET
+        sync: false
+      - key: BASE_URL
+        sync: false
+      - key: KEEP_WARM_URL
+        sync: false
+      - key: KEEP_WARM_PATH
+        value: /health
+      - key: KEEP_WARM_INTERVAL_SECONDS
+        value: "300"
+      - key: ALLOWED_ORIGINS
+        value: "*"

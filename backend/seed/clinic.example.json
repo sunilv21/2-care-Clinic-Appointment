@@ -1,0 +1,81 @@
+{
+  "_note": "TEMPLATE. Doctor/branch names below are PLACEHOLDERS, not sourced. Replace with a real clinic (real branches + real doctors sourced from its public site) before running the seed for real. The schema is what matters here.",
+  "clinic_name": "Example Multi-Speciality Clinic",
+  "country_code": "IN",
+  "time_zone": "Asia/Kolkata",
+  "currency": "INR",
+  "policy": {
+    "reschedule_fee_inr": 300,
+    "cancellation_fee_inr": 500,
+    "fee_window_hours": 24,
+    "_note": "Fee applies ONLY when a change falls within fee_window_hours of the appointment."
+  },
+  "appointment_types": [
+    { "key": "consult",   "name": "Consultation",        "duration_min": 30 },
+    { "key": "first",     "name": "First Appointment",   "duration_min": 45 },
+    { "key": "followup",  "name": "Follow-up",           "duration_min": 15 }
+  ],
+  "branches": [
+    {
+      "key": "branch_a",
+      "name": "Indiranagar Branch",
+      "address": "100 Ft Road, Indiranagar, Bengaluru",
+      "buffer_minutes": 10,
+      "open_time": "09:00",
+      "close_time": "18:00"
+    },
+    {
+      "key": "branch_b",
+      "name": "Whitefield Branch",
+      "address": "ITPL Main Road, Whitefield, Bengaluru",
+      "buffer_minutes": 15,
+      "open_time": "10:00",
+      "close_time": "19:00"
+    }
+  ],
+  "doctors": [
+    {
+      "key": "doc1",
+      "first_name": "PLACEHOLDER",
+      "last_name": "REPLACE-ME",
+      "title": "Dr",
+      "specialty": "General Medicine",
+      "branches": ["branch_a", "branch_b"],
+      "appointment_types": ["consult", "first", "followup"],
+      "work_hours": { "weekdays": [1,2,3,4,5], "start": "09:00", "end": "13:00", "branch": "branch_a" }
+    },
+    {
+      "key": "doc2",
+      "first_name": "PLACEHOLDER",
+      "last_name": "REPLACE-ME",
+      "title": "Dr",
+      "specialty": "Dermatology",
+      "branches": ["branch_b"],
+      "appointment_types": ["consult", "first"],
+      "work_hours": { "weekdays": [1,3,5], "start": "14:00", "end": "19:00", "branch": "branch_b" }
+    }
+  ],
+  "patients": [
+    {
+      "key": "pat_returning",
+      "first_name": "Aarav",
+      "last_name": "Sharma",
+      "phone": "+919000000001",
+      "_note": "Returning patient with prior appointment (seeded) — for the returning-patient scenario."
+    },
+    {
+      "key": "pat_family_1",
+      "first_name": "Meera",
+      "last_name": "Nair",
+      "phone": "+919000000002",
+      "_note": "Shares phone with pat_family_2 — for the family-line disambiguation test."
+    },
+    {
+      "key": "pat_family_2",
+      "first_name": "Rohan",
+      "last_name": "Nair",
+      "phone": "+919000000002",
+      "_note": "Same phone as pat_family_1."
+    }
+  ]
+}

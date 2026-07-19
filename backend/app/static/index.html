@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aarogya Clinic — Ops Dashboard</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1e2740; --line:#28324b; --text:#e7ecf5;
+    --muted:#93a0bd; --accent:#5b8cff; --good:#3ecf8e; --warn:#f0b429; --bad:#f2617a;
+  }
+  @media (prefers-color-scheme:light){
+    :root{--bg:#f4f6fb;--panel:#fff;--panel2:#f0f3f9;--line:#e2e8f2;--text:#1a2233;--muted:#5a6782;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+  header h1{font-size:16px;margin:0;font-weight:650}
+  .badge{font-size:12px;padding:3px 9px;border-radius:20px;border:1px solid var(--line)}
+  .badge.ok{color:var(--good);border-color:var(--good)} .badge.bad{color:var(--bad);border-color:var(--bad)}
+  .spacer{flex:1}
+  button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:7px 13px;border-radius:8px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  main{padding:20px;max-width:1200px;margin:0 auto}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card .n{font-size:26px;font-weight:700} .card .l{color:var(--muted);font-size:12px;margin-top:2px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:18px}
+  section h2{margin:0 0 12px;font-size:14px;font-weight:650;display:flex;align-items:center;gap:8px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  select,input{font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line)}
+  .s-booked,.s-completed,.s-synced{color:var(--good);border-color:var(--good)}
+  .s-pending,.s-calling,.s-active,.s-interrupted{color:var(--warn);border-color:var(--warn)}
+  .s-failed,.s-max_retries,.s-callback_pending,.s-no_answer{color:var(--bad);border-color:var(--bad)}
+  .muted{color:var(--muted)} .empty{color:var(--muted);padding:10px}
+  h2 .count{color:var(--muted);font-weight:400;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏥 Aarogya Clinic — Ops Dashboard</h1>
+  <span id="cliniko-badge" class="badge">Cliniko …</span>
+  <div class="spacer"></div>
+  <button class="primary" onclick="loadAll()">↻ Refresh</button>
+</header>
+<main>
+  <div class="cards" id="cards"></div>
+
+  <section>
+    <h2>🔎 Availability finder</h2>
+    <div class="row">
+      <select id="av-spec"><option value="">Any specialty</option></select>
+      <select id="av-branch"><option value="">Both branches</option></select>
+      <button class="primary" onclick="checkAvail()">Find earliest slots</button>
+    </div>
+    <div class="tablewrap"><table id="av-table"></table></div>
+  </section>
+
+  <section>
+    <h2>📞 Outbound calls <span class="count" id="ob-count"></span></h2>
+    <div class="row">
+      <input id="ob-phone" placeholder="+9190…" size="16">
+      <select id="ob-purpose"><option>callback</option><option>reminder</option><option>followup</option></select>
+      <input id="ob-secret" placeholder="tool secret (if set)" size="16">
+      <button onclick="enqueue()">Enqueue call</button>
+      <button onclick="processOutbound()">Process due now</button>
+    </div>
+    <div class="tablewrap"><table id="ob-table"></table></div>
+  </section>
+
+  <section><h2>📅 Appointments <span class="count" id="ap-count"></span></h2><div class="tablewrap"><table id="ap-table"></table></div></section>
+  <section><h2>🧑 Patients <span class="count" id="pt-count"></span></h2><div class="tablewrap"><table id="pt-table"></table></div></section>
+  <section><h2>🔔 Follow-ups <span class="count" id="fu-count"></span></h2><div class="tablewrap"><table id="fu-table"></table></div></section>
+  <section><h2>☎️ Call sessions <span class="count" id="se-count"></span></h2><div class="tablewrap"><table id="se-table"></table></div></section>
+
+  <section>
+    <h2>🏢 Clinic setup (Supabase ↔ Cliniko)</h2>
+    <div id="clinic-body"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+async function getJSON(u){ const r = await fetch(u); return r.json(); }
+function pill(v){ return `<span class="pill s-${(v||'').replace(/[^a-z_]/gi,'')}">${v||'—'}</span>`; }
+function fmt(ts){ if(!ts) return '—'; return String(ts).replace('T',' ').slice(0,16); }
+function tbl(el, cols, rows, render){
+  if(!rows.length){ el.innerHTML = `<tr><td class="empty">Nothing yet.</td></tr>`; return; }
+  el.innerHTML = `<tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>` +
+    rows.map(r=>`<tr>${render(r).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+}
+
+async function loadSummary(){
+  const s = await getJSON('/api/dashboard/summary');
+  const map = [['appointments_booked','Booked appts'],['patients','Patients'],['doctors','Doctors'],
+    ['branches','Branches'],['outbound_pending','Outbound pending'],['followups_open','Open follow-ups'],
+    ['sessions_open','Open sessions']];
+  $('#cards').innerHTML = map.map(([k,l])=>`<div class="card"><div class="n">${s[k]??'—'}</div><div class="l">${l}</div></div>`).join('');
+}
+async function loadCliniko(){
+  const c = await getJSON('/api/dashboard/cliniko'); const b = $('#cliniko-badge');
+  if(c.ok){ b.className='badge ok'; b.textContent = `Cliniko ${c.shard} · ${c.businesses.length} branches · ${c.practitioners.length} doctors`; }
+  else { b.className='badge bad'; b.textContent = 'Cliniko error'; }
+  return c;
+}
+async function loadClinic(){
+  const c = await getJSON('/api/dashboard/clinic'); const ck = await loadCliniko();
+  const docs = c.doctors.map(d=>`<tr><td>${d.display_name}</td><td>${d.specialty}</td><td class="muted">${d.cliniko_practitioner_id?'✓ linked':'—'}</td></tr>`).join('');
+  const br = c.branches.map(b=>`<tr><td>${b.name}</td><td class="muted">${b.address||''}</td><td>buffer ${b.buffer_minutes}m</td><td class="muted">${b.cliniko_business_id?'✓':'—'}</td></tr>`).join('');
+  $('#clinic-body').innerHTML =
+    `<div class="tablewrap"><table><tr><th>Branch</th><th>Address</th><th>Buffer</th><th>Cliniko</th></tr>${br}</table></div>
+     <div class="tablewrap" style="margin-top:12px"><table><tr><th>Doctor</th><th>Specialty</th><th>Cliniko link</th></tr>${docs}</table></div>`;
+  // populate availability filters
+  $('#av-spec').innerHTML = '<option value="">Any specialty</option>' + [...new Set(c.doctors.map(d=>d.specialty))].map(s=>`<option>${s}</option>`).join('');
+  $('#av-branch').innerHTML = '<option value="">Both branches</option>' + c.branches.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+}
+async function checkAvail(){
+  const q = new URLSearchParams({specialty:$('#av-spec').value, branch:$('#av-branch').value, earliest_across_all:true, limit:8});
+  const d = await getJSON('/api/dashboard/availability?'+q);
+  tbl($('#av-table'), ['Date','Time','Doctor','Specialty','Branch'], d.slots,
+    r=>[r.local_date, r.local_time, r.practitioner_name, r.specialty, r.branch_name]);
+}
+async function loadAppointments(){
+  const d = await getJSON('/api/dashboard/appointments'); $('#ap-count').textContent = `${d.rows.length}`;
+  tbl($('#ap-table'), ['Patient','Doctor','Branch','Type','Start','Status','PMS'], d.rows,
+    r=>[r.patient, r.doctor, r.branch, r.appt_type, fmt(r.start_ts), pill(r.status), pill(r.pms_sync_state)]);
+}
+async function loadPatients(){
+  const d = await getJSON('/api/dashboard/patients'); $('#pt-count').textContent = `${d.rows.length}`;
+  tbl($('#pt-table'), ['Name','Phone(s)','Appts','Cliniko'], d.rows,
+    r=>[r.full_name, r.phones||'—', r.appt_count, r.cliniko_patient_id?'✓':'—']);
+}
+async function loadOutbound(){
+  const d = await getJSON('/api/dashboard/outbound'); $('#ob-count').textContent = `${d.rows.length}`;
+  tbl($('#ob-table'), ['Phone','Purpose','Status','Attempts','Next attempt','Last','Updated'], d.rows,
+    r=>[r.phone_e164, r.purpose, pill(r.status), `${r.attempts}/${r.max_attempts}`, fmt(r.next_attempt_at), r.last_status||'—', fmt(r.updated_at)]);
+}
+async function loadFollowups(){
+  const d = await getJSON('/api/dashboard/followups'); $('#fu-count').textContent = `${d.rows.length}`;
+  tbl($('#fu-table'), ['Phone','Reason','Notes','Resolved','When'], d.rows,
+    r=>[r.phone_e164||'—', r.reason, (r.notes||'').slice(0,60), r.resolved?'✓':'○', fmt(r.created_at)]);
+}
+async function loadSessions(){
+  const d = await getJSON('/api/dashboard/sessions'); $('#se-count').textContent = `${d.rows.length}`;
+  tbl($('#se-table'), ['Phone','Direction','State','Ended','Updated'], d.rows,
+    r=>[r.phone_e164, r.direction, pill(r.state), r.ended_status||'—', fmt(r.updated_at)]);
+}
+async function enqueue(){
+  const phone = $('#ob-phone').value.trim(); if(!phone){ alert('Enter a phone number'); return; }
+  const headers = {'Content-Type':'application/json'};
+  const sec = $('#ob-secret').value.trim(); if(sec) headers['X-Tool-Secret']=sec;
+  const r = await fetch('/outbound/enqueue',{method:'POST',headers,body:JSON.stringify({phone,purpose:$('#ob-purpose').value})});
+  if(r.ok){ $('#ob-phone').value=''; loadOutbound(); } else { alert('Enqueue failed: '+r.status); }
+}
+async function processOutbound(){
+  const headers={}; const sec=$('#ob-secret').value.trim(); if(sec) headers['X-Tool-Secret']=sec;
+  const r = await fetch('/outbound/process',{method:'POST',headers});
+  const j = await r.json().catch(()=>({})); alert('Process: '+JSON.stringify(j)); loadOutbound();
+}
+function loadAll(){ loadSummary();loadClinic();loadAppointments();loadPatients();loadOutbound();loadFollowups();loadSessions(); }
+loadAll();
+</script>
+</body>
+</html>

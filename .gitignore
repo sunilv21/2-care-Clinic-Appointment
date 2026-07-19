@@ -1,0 +1,42 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+
+# Database
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Eval harness generated artifacts (regenerate with: python -m eval.run_eval)
+backend/eval/last_run.json
+backend/eval/run_output.txt
+
+# Claude
+.claude/
+
+# Resolved Bolna tool configs (contain the real webhook secret + public URL)
+backend/bolna/tools.resolved.json
+
+# Frontend build output (rebuild with: npm run build)
+frontend/dist/
