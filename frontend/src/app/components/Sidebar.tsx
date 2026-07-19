@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import {
-  LayoutDashboard, CalendarCheck, CalendarDays, Users, PhoneIncoming, PhoneOutgoing, Bell, PhoneCall, Building2, HeartPulse, Circle,
+  LayoutDashboard, CalendarCheck, CalendarDays, Users, PhoneIncoming, PhoneOutgoing, Bell, PhoneCall, Building2, HeartPulse, Circle, TerminalSquare, BookOpen,
 } from "lucide-react";
 import { cn } from "./ui/utils";
 import { getCliniko, getBolna } from "../api";
 
 export type View =
-  | "overview" | "inbound" | "calendar" | "appointments" | "patients" | "outbound" | "followups" | "sessions" | "clinic-setup";
+  | "overview" | "inbound" | "calendar" | "appointments" | "patients" | "outbound" | "followups" | "sessions" | "clinic-setup" | "system-prompt" | "readme";
 
 interface SidebarProps {
   currentView: View;
@@ -38,6 +38,8 @@ export function Sidebar({ currentView, onViewChange, lastRefresh }: SidebarProps
     { id: "followups", label: "Follow-ups", icon: Bell },
     { id: "sessions", label: "Call Sessions", icon: PhoneCall },
     { id: "clinic-setup", label: "Clinic Setup", icon: Building2 },
+    { id: "system-prompt", label: "System Prompt", icon: TerminalSquare },
+    { id: "readme", label: "README", icon: BookOpen },
   ];
 
   const clinikoOk = cliniko?.ok;

@@ -203,6 +203,22 @@ def dashboard_page():
     return {"ok": True, "message": "dashboard not built; API is at /api/dashboard/*"}
 
 
+@app.get("/system-prompt")
+def system_prompt_page():
+    page = STATIC_DIR / "system_prompt.html"
+    if page.exists():
+        return FileResponse(str(page))
+    raise HTTPException(status_code=404, detail="page not found")
+
+
+@app.get("/readme")
+def readme_page():
+    page = STATIC_DIR / "readme.html"
+    if page.exists():
+        return FileResponse(str(page))
+    raise HTTPException(status_code=404, detail="page not found")
+
+
 @app.get("/api/dashboard/summary")
 def d_summary():
     return dashboard.summary()

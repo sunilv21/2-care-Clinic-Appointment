@@ -10,6 +10,7 @@ import { Followups } from "./components/Followups";
 import { Sessions } from "./components/Sessions";
 import { ClinicSetup } from "./components/ClinicSetup";
 import { RefreshCw } from "lucide-react";
+import { SystemPromptPage, ReadmePage } from "./components/DocumentationPages";
 
 const TITLES: Record<View, string> = {
   overview: "Overview",
@@ -21,6 +22,8 @@ const TITLES: Record<View, string> = {
   followups: "Follow-ups",
   sessions: "Call Sessions",
   "clinic-setup": "Clinic Setup",
+  "system-prompt": "System Prompt",
+  readme: "README",
 };
 
 export default function App() {
@@ -41,6 +44,8 @@ export default function App() {
       case "followups": return <Followups key={refreshKey} />;
       case "sessions": return <Sessions key={refreshKey} />;
       case "clinic-setup": return <ClinicSetup key={refreshKey} />;
+      case "system-prompt": return <SystemPromptPage onBack={() => setView("overview")} />;
+      case "readme": return <ReadmePage onBack={() => setView("overview")} />;
       default: return <Overview key={refreshKey} />;
     }
   };

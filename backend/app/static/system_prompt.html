@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aarogya Clinic — System Prompt & Tool Setup</title>
+  <style>
+    :root {
+      --bg: #0f1420;
+      --panel: #171e2e;
+      --panel2: #1e2740;
+      --line: #28324b;
+      --text: #e7ecf5;
+      --muted: #93a0bd;
+      --accent: #5b8cff;
+      --good: #3ecf8e;
+      --warn: #f0b429;
+      --bad: #f2617a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    .page { max-width: 980px; margin: 0 auto; padding: 24px; }
+    header { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px; margin-bottom: 18px; }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    .muted { color: var(--muted); }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0; }
+    .pill { display: inline-block; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    pre { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow-x: auto; font-size: 13px; }
+    a { color: var(--accent); text-decoration: none; }
+    ul { margin: 8px 0 0 18px; }
+    .note { border-left: 4px solid var(--warn); padding-left: 12px; color: var(--warn); }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .actions a { display: inline-block; border: 1px solid var(--line); background: var(--panel2); padding: 8px 12px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>🧭 System Prompt & Tool Setup</h1>
+      <p class="muted">This page holds the live Bolna configuration details for the clinic voice receptionist.</p>
+      <div class="actions">
+        <a href="/">Back to dashboard</a>
+        <a href="/readme">Open README / documentation</a>
+      </div>
+    </header>
+
+    <div class="card">
+      <h2>Endpoint configuration</h2>
+      <div class="row"><span class="pill">Base URL</span><code>https://two-care-clinic-appointment.onrender.com</code></div>
+      <div class="row"><span class="pill">Webhook</span><code>https://two-care-clinic-appointment.onrender.com/webhooks/bolna_call_end</code></div>
+      <div class="row"><span class="pill">Tools</span><code>https://two-care-clinic-appointment.onrender.com/tools/&lt;tool-name&gt;</code></div>
+    </div>
+
+    <div class="card">
+      <h2>Prompt summary</h2>
+      <pre>Greet the caller warmly and confirm the clinic.
+Always call identify_caller first with the caller phone number.
+Use tools for live patient, doctor, availability, booking, reschedule, cancel, and follow-up actions.
+Never answer live scheduling questions from memory.
+If the call drops, preserve context and resume on callback.</pre>
+    </div>
+
+    <div class="card">
+      <h2>Deployment checklist</h2>
+      <ul>
+        <li>Set BASE_URL and KEEP_WARM_URL to the Render backend URL.</li>
+        <li>Set TOOL_WEBHOOK_SECRET to the same value used by Bolna.</li>
+        <li>Add ALLOWED_ORIGINS for the frontend domain.</li>
+        <li>Rebuild the Bolna tool payload after changing the public URL.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Calling note</h2>
+      <p class="note">Due to the free tier, outbound calls are working fine. For inbound calls, we need to call on the international number, not +19158000106. For both outbound and inbound calls, the numbers must be verified on Twilio first.</p>
+    </div>
+  </div>
+</body>
+</html>
