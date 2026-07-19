@@ -70,7 +70,7 @@ def shutdown(*_):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--port", default="8080")
+    ap.add_argument("--port", default=os.getenv("PORT", "8080"))
     ap.add_argument("--no-workers", action="store_true", help="run only the web server")
     args = ap.parse_args()
 
