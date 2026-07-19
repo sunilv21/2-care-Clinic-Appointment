@@ -33,5 +33,5 @@ TOOL_WEBHOOK_SECRET = os.getenv("TOOL_WEBHOOK_SECRET", "")
 
 # CORS: comma-separated list of allowed origins (e.g. the deployed dashboard's Vercel URL), or "*"
 # for any origin (fine here — the dashboard sends no cookies/credentials cross-origin).
-_origins = os.getenv("ALLOWED_ORIGINS", "*").strip()
+_origins = os.getenv("ALLOWED_ORIGINS", "https://2-care-clinic-appointment.vercel.app").strip()
 ALLOWED_ORIGINS = ["*"] if _origins == "*" else [o.strip() for o in _origins.split(",") if o.strip()]
