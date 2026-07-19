@@ -9,7 +9,7 @@ write-back, plus a bidirectional sync worker that keeps both systems consistent 
 - **Datastore / source of truth for scheduling:** Supabase Postgres
 - **PMS system-of-record + write-back target:** Cliniko (real account, not a mock)
 - **Telephony carrier (under Bolna):** Twilio
-- **Clinic modeled:** *Arogya Multi-Speciality Clinic* — 1 branch, 4 doctors (General Medicine,
+- **Clinic modeled:** *Aarogya Multi-Speciality Clinic* — 1 branch (Indiranagar), 4 doctors (General Medicine,
   Dermatology, Pediatrics, Orthopedics), IST, ₹ (INR)
 
 > ⚠️ **This project runs entirely on free/trial tiers** of Twilio, Bolna, and Cliniko. See
@@ -46,6 +46,7 @@ URL, with CORS configured on the backend to allow it). Neither folder imports ac
 
 ## Table of contents
 
+- [Quick Start](#quick-start)
 - [Repo structure — two independent projects](#repo-structure--two-independent-projects)
 - [Free-tier constraints (read this first)](#free-tier-constraints-read-this-first)
 - [Architecture](#architecture)
@@ -63,7 +64,32 @@ URL, with CORS configured on the backend to allow it). Neither folder imports ac
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
 - [Known limitations](#known-limitations)
+- [Additional Documentation](#additional-documentation)
 - [Repo layout](#repo-layout)
+
+---
+
+## Quick Start
+
+Get the system running in 5 minutes:
+
+```bash
+# Backend setup
+cd backend
+pip install -r requirements.txt
+cp .env.example .env  # Add your API keys
+python -m db.apply                    # Setup database
+python -m seed.seed_cliniko --apply   # Seed Cliniko
+python -m db.seed_supabase           # Mirror to Supabase
+python run.py                        # Start backend (port 8080)
+
+# Frontend setup (new terminal)
+cd frontend
+npm install
+npm run dev                          # Start frontend (port 5173)
+```
+
+Access the dashboard at `http://localhost:5173`. For detailed setup instructions, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
 ---
 
@@ -527,15 +553,26 @@ policy provides the same guarantee.)
 - Cliniko allows overlapping appointments on its own (it only *flags* conflicts via a `conflicts`
   link), so **Supabase's `EXCLUDE` constraint is the real double-booking guard**; Cliniko is the
   write-back record.
-- The clinic currently models **one branch** (collapsed from an original two-branch design after
-  branches were archived directly in Cliniko during testing) — the architecture and code fully
-  support multiple branches (see the cross-branch logic in `backend/app/availability.py`); the
-  assignment's two-branch/cross-branch scenarios would need branches re-added in Cliniko to
-  demonstrate live.
+- The clinic currently models **one branch** (Indiranagar) — the architecture and code fully
+  support multiple branches (see the cross-branch logic in `backend/app/availability.py`); additional
+  branches can be added via Cliniko and will automatically sync to Supabase.
 - No auth on tool webhooks beyond a shared secret (scoped appropriately for a single-tenant demo, not
   multi-tenant production). Dashboard API endpoints have no auth at all (read-mostly ops tool).
 - Running entirely on free tiers (see above) means concurrency (2 simultaneous Bolna calls) and
   outbound reach (verified numbers only) are both capped until any of the three services are upgraded.
+
+---
+
+## Additional Documentation
+
+For more detailed documentation on specific aspects of the project:
+
+- **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** - Comprehensive setup guide for new developers, including prerequisites, configuration, and development workflow
+- **[docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)** - Complete API reference for all backend and frontend endpoints
+- **[docs/COMPONENT_DOCUMENTATION.md](docs/COMPONENT_DOCUMENTATION.md)** - Detailed documentation of React components and UI patterns
+- **[frontend/README.md](frontend/README.md)** - Frontend-specific documentation with tech stack, project structure, and development guide
+- **[BUILD_PLAN.md](BUILD_PLAN.md)** - Architecture decisions, design rationale, and requirement coverage matrix
+- **[backend/bolna/SETUP.md](backend/bolna/SETUP.md)** - Step-by-step Bolna agent configuration guide
 
 ---
 

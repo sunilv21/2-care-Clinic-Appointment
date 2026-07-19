@@ -3,57 +3,114 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aarogya Clinic — README & Documentation</title>
+  <title>Aarogya Clinic — Project Documentation</title>
   <style>
     :root {
-      --bg: #0f1420;
-      --panel: #171e2e;
-      --panel2: #1e2740;
-      --line: #28324b;
-      --text: #e7ecf5;
-      --muted: #93a0bd;
+      --bg: #07111f;
+      --panel: #101b2c;
+      --panel2: #17253a;
+      --line: #24364f;
+      --text: #f3f7ff;
+      --muted: #9fb0ca;
       --accent: #5b8cff;
-      --warn: #f0b429;
+      --good: #36d399;
+      --warn: #fbbf24;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-    .page { max-width: 980px; margin: 0 auto; padding: 24px; }
-    header { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px; margin-bottom: 18px; }
-    h1 { margin: 0 0 8px; font-size: 24px; }
-    .muted { color: var(--muted); }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-    .actions a { display: inline-block; border: 1px solid var(--line); background: var(--panel2); padding: 8px 12px; border-radius: 8px; color: var(--accent); text-decoration: none; }
-    ul { margin: 8px 0 0 18px; }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:linear-gradient(135deg,#07111f 0%,#0f1d31 100%); color:var(--text); line-height:1.7; }
+    .page { max-width: 1100px; margin:0 auto; padding:28px 24px 48px; }
+    header { background:rgba(16,27,44,0.95); border:1px solid var(--line); border-radius:20px; padding:24px 28px; margin-bottom:20px; box-shadow:0 12px 30px rgba(0,0,0,0.25); }
+    h1,h2 { margin:0 0 10px; }
+    h1 { font-size:30px; }
+    h2 { font-size:20px; margin-top:8px; }
+    .muted { color:var(--muted); }
+    .grid { display:grid; gap:16px; }
+    .card { background:rgba(16,27,44,0.95); border:1px solid var(--line); border-radius:16px; padding:20px 22px; box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .actions a { display:inline-block; border:1px solid var(--line); background:var(--panel2); padding:9px 12px; border-radius:10px; color:var(--text); text-decoration:none; }
+    ul { margin:8px 0 0 18px; padding:0; }
+    li { margin-bottom:8px; }
+    .pill { display:inline-block; font-size:12px; padding:4px 10px; border-radius:999px; background:#17253a; border:1px solid var(--line); color:var(--muted); margin-right:8px; }
   </style>
 </head>
 <body>
   <div class="page">
     <header>
-      <h1>📘 README & Documentation</h1>
-      <p class="muted">Project notes, setup references, and operational guidance for the clinic receptionist agent.</p>
+      <h1>📘 Aarogya Clinic — Project Documentation</h1>
+      <p class="muted">Enterprise-ready documentation for the voice receptionist platform, deployment workflow, and operational controls.</p>
       <div class="actions">
         <a href="/">Back to dashboard</a>
-        <a href="/system-prompt">Open system prompt & tool setup</a>
+        <a href="/system-prompt">Open system prompt</a>
+        <a href="/documentation">Open full project documentation</a>
       </div>
     </header>
 
-    <div class="card">
-      <h2>Reference links</h2>
-      <ul>
-        <li><a href="https://github.com" target="_blank" rel="noreferrer">Prompt documentation link</a></li>
-        <li><a href="https://github.com" target="_blank" rel="noreferrer">README / Notion / Google Doc link</a></li>
-      </ul>
-    </div>
+    <div class="grid">
+      <div class="card">
+        <h2>Overview</h2>
+        <p>This solution combines a FastAPI backend, a React-based operations dashboard, a Bolna voice agent, and integrations with Supabase and Cliniko to create a clinic receptionist experience that can manage appointments, follow-ups, and live call workflows.</p>
+        <div class="diagram" style="margin-top:12px">
+          <svg viewBox="0 0 900 260" width="100%" height="240" role="img" aria-label="System architecture diagram">
+            <rect x="40" y="90" width="120" height="60" rx="12" fill="#1f3b5b" stroke="#6ea8ff" />
+            <text x="100" y="124" text-anchor="middle" fill="#f3f7ff" font-size="16">Caller</text>
+            <rect x="240" y="90" width="140" height="60" rx="12" fill="#2d5f8b" stroke="#8ec5ff" />
+            <text x="310" y="124" text-anchor="middle" fill="#f3f7ff" font-size="16">Bolna</text>
+            <rect x="460" y="90" width="180" height="60" rx="12" fill="#2f6f55" stroke="#59d0a2" />
+            <text x="550" y="124" text-anchor="middle" fill="#f3f7ff" font-size="16">FastAPI Tools</text>
+            <rect x="700" y="40" width="140" height="60" rx="12" fill="#3d4d6c" stroke="#93a7c9" />
+            <text x="770" y="74" text-anchor="middle" fill="#f3f7ff" font-size="16">Supabase</text>
+            <rect x="700" y="140" width="140" height="60" rx="12" fill="#3d4d6c" stroke="#93a7c9" />
+            <text x="770" y="174" text-anchor="middle" fill="#f3f7ff" font-size="16">Cliniko</text>
+            <line x1="160" y1="120" x2="240" y2="120" stroke="#8ec5ff" stroke-width="3" />
+            <line x1="380" y1="120" x2="460" y2="120" stroke="#8ec5ff" stroke-width="3" />
+            <line x1="640" y1="120" x2="700" y2="70" stroke="#8ec5ff" stroke-width="3" />
+            <line x1="640" y1="120" x2="700" y2="170" stroke="#8ec5ff" stroke-width="3" />
+          </svg>
+        </div>
+      </div>
 
-    <div class="card">
-      <h2>What this project includes</h2>
-      <ul>
-        <li>FastAPI backend for tools and webhooks</li>
-        <li>React dashboard for clinic operations</li>
-        <li>Bolna voice receptionist integration</li>
-        <li>Supabase and Cliniko connectivity</li>
-      </ul>
+      <div class="card">
+        <h2>System Components</h2>
+        <ul>
+          <li>Backend API for tool execution and webhooks</li>
+          <li>Frontend dashboard for operations and monitoring</li>
+          <li>Bolna voice agent for conversational appointment handling</li>
+          <li>Supabase for structured operational data</li>
+          <li>Cliniko for practitioner and appointment synchronization</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Operational Capabilities</h2>
+        <ul>
+          <li>Appointment booking, rescheduling, and cancellation</li>
+          <li>Returning patient recognition and new patient registration</li>
+          <li>Availability lookup and live slot confirmation</li>
+          <li>Follow-up logging and call continuation support</li>
+          <li>Clinic information response from live backend sources</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Reference Links</h2>
+        <ul>
+          <li><a href="/documentation" style="color:#8ec5ff">Full project documentation</a></li>
+          <li><a href="/system-prompt" style="color:#8ec5ff">Enterprise voice agent prompt</a></li>
+          <li><a href="https://github.com/your-repo/blob/main/docs/GETTING_STARTED.md" target="_blank" style="color:#8ec5ff">Getting started guide</a></li>
+          <li><a href="https://github.com/your-repo/blob/main/docs/API_DOCUMENTATION.md" target="_blank" style="color:#8ec5ff">API documentation</a></li>
+          <li><a href="https://github.com/your-repo/blob/main/docs/COMPONENT_DOCUMENTATION.md" target="_blank" style="color:#8ec5ff">Component documentation</a></li>
+          <li><a href="https://github.com/your-repo/blob/main/frontend/README.md" target="_blank" style="color:#8ec5ff">Frontend documentation</a></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Deployment and Telephony Notes</h2>
+        <ul>
+          <li>Use the public Render backend URL for all Bolna tool and webhook configuration.</li>
+          <li>Ensure Twilio numbers are verified for both inbound and outbound testing.</li>
+          <li>For inbound calls, use an international verified number rather than a domestic test number.</li>
+        </ul>
+      </div>
     </div>
   </div>
 </body>

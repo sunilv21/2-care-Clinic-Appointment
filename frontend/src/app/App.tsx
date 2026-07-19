@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar, View } from "./components/Sidebar";
 import { Overview } from "./components/Overview";
 import { InboundCalls } from "./components/InboundCalls";
@@ -10,7 +10,7 @@ import { Followups } from "./components/Followups";
 import { Sessions } from "./components/Sessions";
 import { ClinicSetup } from "./components/ClinicSetup";
 import { RefreshCw } from "lucide-react";
-import { SystemPromptPage, ReadmePage } from "./components/DocumentationPages";
+import { UnifiedDocumentationPage } from "./components/DocumentationPages";
 
 const TITLES: Record<View, string> = {
   overview: "Overview",
@@ -22,14 +22,50 @@ const TITLES: Record<View, string> = {
   followups: "Follow-ups",
   sessions: "Call Sessions",
   "clinic-setup": "Clinic Setup",
-  "system-prompt": "System Prompt",
-  readme: "README",
+  documentation: "Documentation",
 };
+
+function getViewFromPath(path: string): View {
+  const clean = path.replace(/^\/+|\/+$/g, "");
+  const map: Record<string, View> = {
+    "": "overview",
+    "overview": "overview",
+    "inbound": "inbound",
+    "calendar": "calendar",
+    "appointments": "appointments",
+    "patients": "patients",
+    "outbound": "outbound",
+    "followups": "followups",
+    "sessions": "sessions",
+    "clinic-setup": "clinic-setup",
+    "documentation": "documentation",
+  };
+  return map[clean] ?? "overview";
+}
+
+function getPathFromView(view: View): string {
+  return view === "overview" ? "/" : `/${view}`;
+}
 
 export default function App() {
   const [view, setView] = useState<View>("overview");
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const navigateTo = (nextView: View) => {
+    const path = getPathFromView(nextView);
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, "", path);
+    }
+    setView(nextView);
+  };
+
+  useEffect(() => {
+    const syncFromUrl = () => setView(getViewFromPath(window.location.pathname));
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
 
   const refresh = () => { setLastRefresh(new Date()); setRefreshKey(k => k + 1); };
 
@@ -44,15 +80,14 @@ export default function App() {
       case "followups": return <Followups key={refreshKey} />;
       case "sessions": return <Sessions key={refreshKey} />;
       case "clinic-setup": return <ClinicSetup key={refreshKey} />;
-      case "system-prompt": return <SystemPromptPage onBack={() => setView("overview")} />;
-      case "readme": return <ReadmePage onBack={() => setView("overview")} />;
+      case "documentation": return <UnifiedDocumentationPage onBack={() => navigateTo("overview")} />;
       default: return <Overview key={refreshKey} />;
     }
   };
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar currentView={view} onViewChange={setView} lastRefresh={lastRefresh} />
+      <Sidebar currentView={view} onViewChange={navigateTo} lastRefresh={lastRefresh} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center justify-between">

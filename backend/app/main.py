@@ -219,6 +219,14 @@ def readme_page():
     raise HTTPException(status_code=404, detail="page not found")
 
 
+@app.get("/documentation")
+def documentation_page():
+    page = STATIC_DIR / "documentation.html"
+    if page.exists():
+        return FileResponse(str(page))
+    raise HTTPException(status_code=404, detail="page not found")
+
+
 @app.get("/api/dashboard/summary")
 def d_summary():
     return dashboard.summary()
