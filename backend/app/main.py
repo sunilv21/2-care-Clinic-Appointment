@@ -154,11 +154,31 @@ class SessionReq(BaseModel):
 
 
 class CallEndReq(BaseModel):
-    phone: str
-    status: str
+    phone: Optional[str] = None
+    status: Optional[str] = None
     direction: str = "inbound"
     transcript: Any = None
     bolna_execution_id: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_bolna_aliases(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        values = dict(data)
+        if not values.get("phone"):
+            values["phone"] = (
+                values.get("phone_number")
+                or values.get("caller_phone")
+                or values.get("from")
+            )
+        if not values.get("status"):
+            values["status"] = values.get("call_status") or values.get("call_state")
+        if not values.get("bolna_execution_id"):
+            values["bolna_execution_id"] = values.get("execution_id") or values.get("call_id")
+        if not values.get("direction"):
+            values["direction"] = values.get("call_direction") or "inbound"
+        return values
 
 
 # ── routes ───────────────────────────────────────────────────────────────────
