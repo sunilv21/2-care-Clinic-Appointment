@@ -364,7 +364,7 @@ _COMPLETE = {"completed", "success", "succeeded", "ended", "done"}
 _NO_ANSWER = {"no_answer", "not_answered", "busy", "rejected"}
 
 
-def finalize_call(*, phone: str, status: str, direction: str = "inbound",
+def finalize_call(*, phone: Optional[str] = None, status: Optional[str] = None, direction: str = "inbound",
                   transcript: Any = None, bolna_execution_id: Optional[str] = None) -> Dict[str, Any]:
     """Map a Bolna terminal status to a resumable session state.
 
@@ -373,6 +373,7 @@ def finalize_call(*, phone: str, status: str, direction: str = "inbound",
     - anything else (inbound)   -> 'interrupted'       (dropped -> resume on callback)
     """
     import json
+    phone = (phone or "").strip() or None
     s = (status or "").strip().lower()
     if direction == "outbound" and s in _NO_ANSWER:
         new_state = "callback_pending"
@@ -381,9 +382,12 @@ def finalize_call(*, phone: str, status: str, direction: str = "inbound",
     else:
         new_state = "interrupted"
 
-    existing = db.query_one(
-        """select id from call_sessions where phone_e164=%s
-           order by updated_at desc limit 1""", (phone,))
+    if phone:
+        existing = db.query_one(
+            """select id from call_sessions where phone_e164=%s
+               order by updated_at desc limit 1""", (phone,))
+    else:
+        existing = None
     with db.get_conn() as conn:
         cur = conn.cursor()
         if existing:
@@ -396,13 +400,22 @@ def finalize_call(*, phone: str, status: str, direction: str = "inbound",
                  bolna_execution_id, existing["id"]))
             sid = cur.fetchone()[0]
         else:
-            cur.execute(
-                """insert into call_sessions(phone_e164, state, ended_status, ended_at,
-                       transcript_json, bolna_execution_id, direction)
-                   values(%s,%s,%s,now(),%s,%s,%s) returning id""",
-                (phone, new_state, s,
-                 json.dumps(transcript) if transcript is not None else None,
-                 bolna_execution_id, direction))
+            if phone:
+                cur.execute(
+                    """insert into call_sessions(phone_e164, state, ended_status, ended_at,
+                           transcript_json, bolna_execution_id, direction)
+                       values(%s,%s,%s,now(),%s,%s,%s) returning id""",
+                    (phone, new_state, s,
+                     json.dumps(transcript) if transcript is not None else None,
+                     bolna_execution_id, direction))
+            else:
+                cur.execute(
+                    """insert into call_sessions(state, ended_status, ended_at,
+                           transcript_json, bolna_execution_id, direction)
+                       values(%s,%s,now(),%s,%s,%s) returning id""",
+                    (new_state, s,
+                     json.dumps(transcript) if transcript is not None else None,
+                     bolna_execution_id, direction))
             sid = cur.fetchone()[0]
     return {"ok": True, "session_id": sid, "state": new_state}
 
